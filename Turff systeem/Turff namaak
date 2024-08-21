@@ -1,0 +1,185 @@
+from tkinter import *
+from tkinter import ttk
+import sqlite3
+
+#tkinter initialization
+root = Tk()
+root.title('Biertje?')
+width, height = root.winfo_screenwidth(), root.winfo_screenheight()
+root.geometry('%dx%d+0+0' % (width, height))
+tabControl = ttk.Notebook(root)
+
+tab1 = ttk.Frame(tabControl)
+tab2 = ttk.Frame(tabControl)
+tab3 = ttk.Frame(tabControl)
+
+tabControl.add(tab1, text='Bier')
+tabControl.add(tab2, text='Kratten')
+tabControl.add(tab3, text="baas toevoegen")
+tabControl.pack(expand=1, fill="both")
+
+#database creation (not needed after running it the first time)
+'''c.execute("""CREATE TABLE personen (
+        naam text,
+        bier integer,
+        krat integer
+        )""")'''
+
+#lists for storing all the persons and ID's from the database
+baasjes = []
+baasjesID = []
+
+#class for creating the beer widgets
+class Bier_widget(Frame):
+
+    def __init__(self, parent, label_text, oid):
+        super().__init__(master=parent)
+
+        conn = sqlite3.connect('baasjes.db')
+        c = conn.cursor()
+        c.execute(f'SELECT bier FROM personen WHERE oid={oid}')
+        hvl_bier = c.fetchall()
+        conn.commit()
+        conn.close()
+
+        Label(self, text=label_text, font=('Aerial', 20)).grid(row=0, column=0, columnspan=2)
+        hvl_bier_label = Label(self, text=hvl_bier, font=('Aerial', 11)).grid(row=1, column=0, columnspan=2)
+        Button(self, text='+', command=lambda: self.plus_bier(oid)).grid(row=2, column=0, sticky=W+E)
+        Button(self, text='-', command=lambda: self.min_bier(oid)).grid(row=2, column=1, sticky=W+E)
+        self.pack()
+
+    #when the + button is pressed the database will add +1 to the corresponding person in the beer column
+    #and it will change the label to the corresponding number in the database
+    def plus_bier(self, oid):
+        conn = sqlite3.connect('baasjes.db')
+        c = conn.cursor()
+        c.execute(f'UPDATE personen SET bier = bier + 1 WHERE oid={oid}')
+        c.execute(f'SELECT bier FROM personen WHERE oid={oid}')
+        hvl_bier = c.fetchall()
+        conn.commit()
+        conn.close()
+        hvl_bier_label = Label(self, text=hvl_bier, font=('Aerial', 11)).grid(row=1, column=0, columnspan=2)
+
+    #same as the plus_bier function but instead of +1 it will commit -1
+    def min_bier(self, oid):
+        conn = sqlite3.connect('baasjes.db')
+        c = conn.cursor()
+        c.execute(f'UPDATE personen SET bier = bier + -1 WHERE oid={oid}')
+        c.execute(f'SELECT bier FROM personen WHERE oid={oid}')
+        hvl_bier = c.fetchall()
+        conn.commit()
+        conn.close()
+        hvl_bier_label = Label(self, text=hvl_bier, font=('Aerial', 11)).grid(row=1, column=0, columnspan=2)
+
+
+#class for creating the crate widgets (same as the beer widget but stored on a different tab)
+class Krat_widget(Frame):
+    def __init__(self, parent, label_text, oid):
+        super().__init__(master=parent)
+
+        conn = sqlite3.connect('baasjes.db')
+        c = conn.cursor()
+        c.execute(f'SELECT krat FROM personen WHERE oid={oid}')
+        hvl_krat = c.fetchall()
+        conn.commit()
+        conn.close()
+
+        Label(self, text=label_text, font=('Aerial', 20)).grid(row=0, column=0, columnspan=2)
+        hvl_krat_label = Label(self, text=hvl_krat, font=('Aerial', 11)).grid(row=1, column=0, columnspan=2)
+        Button(self, text='+', command=lambda: self.plus_krat(oid)).grid(row=2, column=0, sticky=W+E)
+        Button(self, text='-', command=lambda: self.min_krat(oid)).grid(row=2, column=1, sticky=W+E)
+        self.pack()
+
+    def plus_krat(self, oid):
+        conn = sqlite3.connect('baasjes.db')
+        c = conn.cursor()
+        c.execute(f'UPDATE personen SET krat = krat + 1 WHERE oid={oid}')
+        c.execute(f'SELECT krat FROM personen WHERE oid={oid}')
+        hvl_krat = c.fetchall()
+        conn.commit()
+        conn.close()
+        hvl_krat_label = Label(self, text=hvl_krat, font=('Aerial', 11)).grid(row=1, column=0, columnspan=2)
+
+
+    def min_krat(self, oid):
+        conn = sqlite3.connect('baasjes.db')
+        c = conn.cursor()
+        c.execute(f'UPDATE personen SET krat = krat + -1 WHERE oid={oid}')
+        c.execute(f'SELECT krat FROM personen WHERE oid={oid}')
+        hvl_krat = c.fetchall()
+        conn.commit()
+        conn.close()
+        hvl_krat_label = Label(self, text=hvl_krat, font=('Aerial', 11)).grid(row=1, column=0, columnspan=2)
+
+#stores a new person in the database and the deletes the persons list on tab 3
+def opslaan():
+    global Naam
+    conn = sqlite3.connect('baasjes.db')
+    c =conn.cursor()
+
+    c.execute('INSERT INTO personen VALUES (:naam, :bier, :krat)',
+              {
+                  'naam': naamPlus.get(),
+                  'bier': 0,
+                  'krat': 0
+              })
+    conn.commit()
+    conn.close()
+    query.destroy()
+    update()
+
+#deletes a person from the database and deletes the persons list on tab 3
+def verwijderen():
+    conn = sqlite3.connect('baasjes.db')
+    c = conn.cursor()
+
+    c.execute(f'DELETE from personen WHERE oid={naamMin.get()}')
+    conn.commit()
+    conn.close()
+    query.destroy()
+    update()
+
+#updates the persons list after a person has been deleted or added to the database
+#for these changes to affect the widgets the program must be restarted
+def update():
+    global baasjes
+    global query
+    conn = sqlite3.connect('baasjes.db')
+
+    c = conn.cursor()
+    c.execute('SELECT *, oid FROM personen')
+    records = c.fetchall()
+    print_records = ''
+    for record in records:
+        baasjes.append(str(record[0]))
+        baasjesID.append(str(record[3]))
+        print_records += f'{str(record[3])} {str(record[0])} \n'
+    query = Label(tab3, text=print_records, font=('Arial', 18))
+    query.grid(row=4, column=0, columnspan=4)
+update()
+
+#tab 1 and 2
+for baasje, oid in zip(baasjes, baasjesID):
+    baasje = Bier_widget(tab1, baasje, oid)
+    baasje = Krat_widget(tab2, baasje, oid)
+
+#tab 3
+nieuweNaam = Label(tab3, text='Nieuw baasje:')
+nieuweNaam.grid(row=0, column=0)
+naamPlus = Entry(tab3)
+naamPlus.grid(row=0, column=1)
+Opslaan = Button(tab3, text='Opslaan', command=opslaan)
+Opslaan.grid(row=1, column=1, sticky=W+E)
+
+deleteNaam = Label(tab3, text='Iemand weghalen (ID):')
+deleteNaam.grid(row=0, column=2)
+naamMin = Entry(tab3)
+naamMin.grid(row=0, column=3)
+Verwijderen = Button(tab3, text='Verwijderen', command=verwijderen)
+Verwijderen.grid(row=1, column=3, sticky=W+E)
+
+bestaand = Label(tab3, text='Bestaande baasjes:', font=('Arial', 18))
+bestaand.grid(row=3, column=0, columnspan=4)
+
+
+root.mainloop()
