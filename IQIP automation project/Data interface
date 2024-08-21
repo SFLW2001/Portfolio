@@ -1,0 +1,183 @@
+from tkinter import *
+from tkinter import filedialog
+from tkinter import messagebox
+import tkinter.ttk as ttk
+import customtkinter
+import serial.tools.list_ports
+import serial
+import threading
+
+#tkinter initialization
+root = Tk()
+root.title('Calibration data')
+root.geometry('350x400')
+
+#returns all available serial ports which can be found on the PC
+def serial_ports():
+    return serial.tools.list_ports.comports()
+
+#saves the selected COM port from the drop down menu
+def select(self):
+    global COM_port
+    port = COM_select.get()
+    currentPort = str(port)
+    COM_port = str(currentPort.split(' ')[0])
+
+#tries to open the desired COM port and opens the reading function on a different thread
+def open_port():
+    global destination_file
+    global serial_connection
+    try:
+        port = COM_port
+        baudrate = 115200
+        serial_connection = serial.Serial(port, baudrate)
+    except:
+        messagebox.showerror('Select COM port', 'No COM port selected')
+    try:
+        destination_file = open(full_path, 'w')
+        threading.Thread(target=reading).start()
+    except:
+        messagebox.showerror('Select path', 'No path selected')
+        serial_connection.close()
+        return
+
+#constantly reads the input from the desired COM port for data coming out of the raspberry pi pico
+#and creates a list with all the collected data so it can be exported to a txt file later
+def reading():
+    global data_list
+    S1 = s1_entry.get()
+    S2 = s2_entry.get()
+    S3 = s3_entry.get()
+    S4 = s4_entry.get()
+    n = 1
+    data_list = [f'Serial number 1: {S1} ', f'Serial number 2: {S2}\n',
+                 f'Serial number 3: {S3} ', f'Serial number 4: {S4}\n',
+                 'Calibration method: Automated system Inholland\n']
+    while True:
+        if S1 == '' or S2 == '' or S3 == '' or S4 == '':
+            messagebox.showerror('Serial number error', 'One or more serial numbers are missing')
+            serial_connection.close()
+            break
+        else:
+            data = serial_connection.readline().decode('utf-8').strip()
+            cal_data.configure(state='normal')
+            cal_data.insert(END, f'[{n}]: {data}\n')
+            cal_data.configure(state='disabled')
+            data_list.append(f'[{n}]: {data}\n')
+            n = n+1
+
+#joins everything present in the datalist together and exports it to a txt file
+def export():
+    data_str = ''.join(data_list)
+    destination_file.write(data_str)
+    messagebox.showinfo('Completed', 'Certificate exported')
+
+#closes the COM port connection
+def stop_reading():
+    serial_connection.close()
+
+#opens a new window where the file path can be selected where the txt will be exported to
+def path():
+    global top
+    global enter_name
+    top = Tk()
+    top.title('File path')
+    top.geometry('400x200')
+
+    file_text = Label(top, text='File name')
+    file_text.grid(row=0, column=0)
+
+    enter_name = Entry(top)
+    enter_name.grid(row=0, column=1, ipadx=23, sticky=W+E)
+
+    path = Label(top, text='File path')
+    path.grid(row=1, column=0)
+
+    file_dir1 = Label(top, text='No file location selected', bd=1, relief=SUNKEN)
+    file_dir1.grid(row=1, column=1, ipadx=20, sticky=W + E)
+
+    path_select = Button(top, text='Select file directory', command=dir)
+    path_select.grid(row=2, column=0, ipadx=5, padx=5)
+
+    save = Button(top, text='Save path', command=save_path)
+    save.grid(row=3, column=0, ipadx=30, pady=5)
+
+#saves the desired path which is selected in the path function
+def save_path():
+    global full_path
+    global destination_file
+    file_name = enter_name.get()
+    try:
+        full_path = f'{file_path}/{file_name}.txt'
+        file_dir = Label(root, text=full_path, bd=1, relief=SUNKEN)
+        file_dir.grid(row=0, column=0, columnspan=2, sticky=W + E)
+        destination_file = open(full_path, 'w')
+        top.destroy()
+    except:
+        messagebox.showerror('File path error', 'Enter a correct file path')
+
+#opens windows explorer to choose a directory for the txt file to be exported to
+def dir():
+    global file_path
+    file_path = filedialog.askdirectory()
+    file_dir1 = Label(top, text=file_path, bd=1, relief=SUNKEN)
+    file_dir1.grid(row=1, column=1, ipadx=20, sticky=W + E)
+
+#clears the data field of all the data
+def clear():
+    cal_data.configure(state='normal')
+    cal_data.delete('1.0', 'end')
+
+#tkinter widgets
+file_dir = Label(root, text='No file location selected', bd=1, relief=SUNKEN)
+file_dir.grid(row=0, column=0, columnspan=2, sticky=W+E)
+
+distance = Label(root, text='Calibration data:', bd=1)
+distance.grid(row=1, column=0)
+
+cal_data = customtkinter.CTkTextbox(root)
+cal_data.configure(state='disabled')
+cal_data.grid(row=2, column=0, rowspan=20)
+
+delete = Button(root, text='Reset data', command=clear)
+delete.grid(row=23, column=0, sticky=W+E)
+
+COM_select = ttk.Combobox(root, values=serial_ports())
+COM_select.grid(row=1, column=1)
+COM_select.bind('<<ComboboxSelected>>', select)
+
+start_reading = Button(root, text='Start reading', command=open_port)
+start_reading.grid(row=2, column=1, ipadx=31)
+
+stop_read = Button(root, text='Stop reading', command=stop_reading)
+stop_read.grid(row=3, column=1, ipadx=31)
+
+export_data = Button(root, text='Print certificate', command=export)
+export_data.grid(row=4, column=1, ipadx=24)
+
+select_dir = Button(root, text='Select file directory', command=path)
+select_dir.grid(row=5, column=1, ipadx=14)
+
+s_label = Label(root, text='Enter serial numbers:', bd=1)
+s_label.grid(row=24, column=0, columnspan=2, pady=10, sticky=W+E)
+
+s1_label = Label(root, text='Serial number 1:')
+s2_label = Label(root, text='Serial number 2:')
+s3_label = Label(root, text='Serial number 3:')
+s4_label = Label(root, text='Serial number 4:')
+s1_label.grid(row=25, column=0)
+s2_label.grid(row=26, column=0)
+s3_label.grid(row=27, column=0)
+s4_label.grid(row=28, column=0)
+
+s1_entry = Entry(root)
+s2_entry = Entry(root)
+s3_entry = Entry(root)
+s4_entry = Entry(root)
+s1_entry.grid(row=25, column=1, sticky=W+E)
+s2_entry.grid(row=26, column=1, sticky=W+E)
+s3_entry.grid(row=27, column=1, sticky=W+E)
+s4_entry.grid(row=28, column=1, sticky=W+E)
+
+
+root.mainloop()
