@@ -1,0 +1,97 @@
+from tkinter import *
+from tkinter import ttk, messagebox
+import customtkinter
+import socket
+import threading
+
+#tkinter initialization
+root = Tk()
+root.title("Chat")
+root.geometry("700x600")
+
+#server information
+HEADER = 64
+PORT = 5050
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "!DISCONNECT"
+SERVER = "192.168.178.20"
+ADDR = (SERVER, PORT)
+
+#constantly listens to the server for incoming messages
+def listen():
+    while connected:
+        incom_msg = client.recv(2048).decode(FORMAT)
+        textField.configure(state=NORMAL)
+        textField.insert(END, incom_msg)
+        textField.configure(state=DISABLED)
+
+#connects user to the server when pressing the connect button
+def connectUser():
+    global username
+    global client
+    global connected
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(ADDR)
+
+        username = userEntry.get()
+        textField.configure(state=NORMAL)
+        textField.insert(END, "[CONNECTED]\n")
+        textField.configure(state=DISABLED)
+
+        connected = True
+        threading.Thread(target=listen).start()
+    except:
+        messagebox.showerror('Server error', 'Server is offline')
+
+#disconnects the user when the disconnect button is pressed
+def disconnectUser():
+    connected = False
+    send(DISCONNECT_MESSAGE)
+
+    textField.configure(state=NORMAL)
+    textField.insert(END, "[DISCONNECTED]\n")
+    textField.configure(state=DISABLED)
+
+#sends the message to the server
+def send(message):
+    msg = message.encode(FORMAT)
+    msg_length = len(msg)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    client.send(send_length)
+    client.send(msg)
+
+#converts the written text in the entry field into a messages
+def sendButton():
+    try:
+        message = entryField.get(1.0, END)
+        entryField.delete(1.0, END)
+        send(f"[{username}]: {message}")
+    except:
+        messagebox.showerror('Connect', 'You are not connected')
+
+#tkinter widgets
+textField = customtkinter.CTkTextbox(root, state=DISABLED)
+textField.grid(row=0, column=0, ipadx=150, ipady=100, rowspan=30)
+
+entryField = Text(root, width=62, height=3)
+entryField.grid(row=31, column=0)
+
+userLabel = Label(root, text="Username:")
+userLabel.grid(row=0, column=1)
+
+userEntry = Entry(root)
+userEntry.grid(row=0, column=2)
+
+connectButton = Button(root, text="Connect", command=connectUser)
+connectButton.grid(row=1, column=2, sticky=W+E+N+S)
+
+disconnectButton = Button(root, text="Disconnect", command=disconnectUser)
+disconnectButton.grid(row=2, column=2, sticky=W+E+N+S)
+
+sendButton = Button(root, text=f"Send \n message", command=sendButton)
+sendButton.grid(row=31, column=1, sticky=W+E+N+S)
+
+
+root.mainloop()
