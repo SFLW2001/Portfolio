@@ -26,4 +26,5 @@ heb gekregen. Naast dat het een leuk project was om te maken hebben mijn vriende
 **Verdere ervaring**:
 Tijdens mijn stage bij Inholland applied sciences lab heb ik een systeem gecreëerd die de data van verschillende sensoren in de Inholland wind tunnel kan lezen. Om dit te doen zijn alle sensoren aangesloten aan een arduino uno waar de data werd omgezet in een leesbaar
 formaat voor de computer. Daarna werd deze data doorgestuurd naar een labview programma op de computer waar alle data makkelijk in grafieken af te lezen was en waar het ook opgeslagen kon worden in excel bestanden. Helaas staan deze bestanden op de servers van de
-hogeschool waar ik op dit moment niet bij kan in verband met de vakantie.
+hogeschool waar ik op dit moment niet bij kan in verband met de vakantie. Dit is het enige project waar ik ook andere talen zoals C++ en labview heb gebruikt en ik zou kunnen zeggen dat ik redelijk comfortabel ben in deze talen maar natuurlijk niet zo goed als ik in 
+python ben
