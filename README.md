@@ -22,3 +22,8 @@ Vrienden van mij hadden geen turff tablet in huis voor het bijhouden van hun bie
 nog thuis konden gebruiken. Het ziet er natuurlijk niet zo mooi uit als het echte turff systeem maar het werkt vrijwel hetzelfde. Tijdens dit project kon ik mijn kennis van classes in python ook echt toepassen in een project en heb ik ook het gevoel dat ik hier erg veel
 van geleerd heb. Daarnaast heb ik tijdens dit project ook veel geleerd over het gebruiken van mySQL en hoe dit goed geintegreerd kan worden in python. Ik had voor dit project al wat kennis van mySQL maar ik heb het gevoel dat ik het door dit project helemaal onder de knie
 heb gekregen. Naast dat het een leuk project was om te maken hebben mijn vrienden nog steeds een raspberry pi in hun huis hangen met dit programma er op en hebben ze er erg veel aan gehad zonder het geld voor de turff uit te geven.
+
+**Verdere ervaring**:
+Tijdens mijn stage bij Inholland applied sciences lab heb ik een systeem gecreëerd die de data van verschillende sensoren in de Inholland wind tunnel kan lezen. Om dit te doen zijn alle sensoren aangesloten aan een arduino uno waar de data werd omgezet in een leesbaar
+formaat voor de computer. Daarna werd deze data doorgestuurd naar een labview programma op de computer waar alle data makkelijk in grafieken af te lezen was en waar het ook opgeslagen kon worden in excel bestanden. Helaas staan deze bestanden op de servers van de
+hogeschool waar ik op dit moment niet bij kan in verband met de vakantie.
